@@ -6,3 +6,4 @@ tmp
 .eslintcache
 .nyc_output
 coverage
+build

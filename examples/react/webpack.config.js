@@ -4,19 +4,20 @@ const path = require('path');
 const cp = require('child_process');
 const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const S3Plugin = require('webpack-s3-plugin');
+// const S3Plugin = require('webpack-s3-plugin');
 const RollbarSourcemapPlugin = require('../../dist/RollbarSourceMapPlugin');
 
 const rollbarClientAccessToken = process.env.ROLLBAR_CLIENT_TOKEN;
 const rollbarServerAccessToken = process.env.ROLLBAR_SERVER_TOKEN;
-const bucket = process.env.AWS_S3_BUCKET;
-const s3Options = {
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  region: process.env.AWS_REGION
-};
-const basePath = 'assets';
-const publicPath = `https://s3-${s3Options.region}.amazonaws.com/${bucket}/${basePath}`;
+// const bucket = process.env.AWS_S3_BUCKET;
+// const s3Options = {
+//   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+//   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+//   region: process.env.AWS_REGION
+// };
+// const basePath = 'assets';
+const publicPath = `http://localhost:3000`;
+const buildFolder = path.resolve(__dirname, 'build');
 let version;
 
 try {
@@ -36,16 +37,12 @@ module.exports = {
     app: './src/index'
   },
   output: {
-    path: path.join(__dirname, 'dist'),
     publicPath,
-    filename: '[name]-[chunkhash].js',
-    chunkFilename: '[name]-[chunkhash].js'
-  },
-  optimization: {
-    minimize: true,
-    splitChunks: {
-      chunks: 'initial'
-    }
+    filename: 'bundle-[name]-[fullhash].min.js',
+    sourceMapFilename: 'bundle-[name]-[fullhash].min.js.map',
+    path: buildFolder,
+    clean: true
+    // chunkFilename: '[name]-[chunkhash].js'
   },
   plugins: [
     new webpack.DefinePlugin({
@@ -59,27 +56,27 @@ module.exports = {
     }),
     new HtmlWebpackPlugin({ template: 'src/index.html' }),
     // Publish minified source
-    new S3Plugin({
-      include: /\.js$/,
-      basePath,
-      s3Options,
-      s3UploadOptions: {
-        Bucket: bucket,
-        ACL: 'public-read',
-        ContentType: 'application/javascript'
-      }
-    }),
-    // Publish sourcemap, but keep it private
-    new S3Plugin({
-      include: /\.map$/,
-      basePath: `${basePath}`,
-      s3Options,
-      s3UploadOptions: {
-        Bucket: bucket,
-        ACL: 'private',
-        ContentType: 'application/json'
-      }
-    }),
+    // new S3Plugin({
+    //   include: /\.js$/,
+    //   basePath,
+    //   s3Options,
+    //   s3UploadOptions: {
+    //     Bucket: bucket,
+    //     ACL: 'public-read',
+    //     ContentType: 'application/javascript'
+    //   }
+    // }),
+    // // Publish sourcemap, but keep it private
+    // new S3Plugin({
+    //   include: /\.map$/,
+    //   basePath: `${basePath}`,
+    //   s3Options,
+    //   s3UploadOptions: {
+    //     Bucket: bucket,
+    //     ACL: 'private',
+    //     ContentType: 'application/json'
+    //   }
+    // }),
     // Upload emitted sourcemaps to rollbar
     new RollbarSourcemapPlugin({
       accessToken: rollbarServerAccessToken,
